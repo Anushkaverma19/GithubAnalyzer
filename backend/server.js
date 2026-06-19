@@ -11,27 +11,36 @@ const githubRoutes = require("./routes/githubRoutes");
 
 const app = express();
 
-// CORS
+// ================= CORS =================
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "*", // change later to frontend URL in production
 }));
 
-// JSON BODY
+// ================= MIDDLEWARE =================
 app.use(express.json());
 
-// DB CONNECT
-connectMySQL();
-
-// SYNC DB
-sequelize.sync({ alter: true })
-  .then(() => console.log("MySQL Synced"))
-  .catch(err => console.log(err));
-
-// ROUTES
+// ================= ROUTES =================
 app.use("/api/auth", authRoutes);
 app.use("/api/github", githubRoutes);
 
-// SERVER START
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+// ================= START SERVER =================
+const startServer = async () => {
+  try {
+    // 1. Connect DB
+    await connectMySQL();
+
+    // 2. Sync tables AFTER DB connection
+    await sequelize.sync({ alter: true });
+    console.log("MySQL Synced ✅");
+
+    // 3. Start server ONLY after DB is ready
+    app.listen(5000, () => {
+      console.log("Server running on port 5000 🚀");
+    });
+
+  } catch (err) {
+    console.log("Startup Error ❌:", err);
+  }
+};
+
+startServer();
