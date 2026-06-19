@@ -1,22 +1,32 @@
 const axios = require("axios");
 const Analysis = require("../models/Analysis");
 
-// ANALYZE + SAVE
+// ================= ANALYZE + SAVE =================
 exports.analyzeGithub = async (req, res) => {
   try {
     const { username } = req.body;
+
+    console.log("USERNAME RECEIVED:", username);
 
     if (!username) {
       return res.status(400).json({ message: "Username required" });
     }
 
+    // ================= GITHUB API CALL =================
     const response = await axios.get(
-      `https://api.github.com/users/${username}`
+      `https://api.github.com/users/${username}`,
+      {
+        headers: {
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "GitHub-Analyzer-App",
+        },
+      }
     );
 
     const user = response.data;
 
-    const saved = await Analysis.create({
+    // ================= SAVE TO DB =================
+    await Analysis.create({
       username: user.login,
       publicRepos: user.public_repos,
       followers: user.followers,
@@ -26,7 +36,8 @@ exports.analyzeGithub = async (req, res) => {
       location: user.location,
     });
 
-    res.json({
+    // ================= RESPONSE =================
+    return res.json({
       profile: {
         username: user.login,
         avatar: user.avatar_url,
@@ -56,12 +67,19 @@ exports.analyzeGithub = async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err.message);
-    res.status(500).json({ message: "GitHub API error" });
+    console.log(
+      "GITHUB ERROR DETAILS:",
+      err.response?.data || err.message
+    );
+
+    return res.status(500).json({
+      message: "GitHub API error",
+      error: err.response?.data || err.message,
+    });
   }
 };
 
-// GET ALL
+// ================= GET ALL PROFILES =================
 exports.getAllProfiles = async (req, res) => {
   try {
     const data = await Analysis.findAll({
@@ -74,7 +92,7 @@ exports.getAllProfiles = async (req, res) => {
   }
 };
 
-// GET ONE
+// ================= GET PROFILE BY ID =================
 exports.getProfileById = async (req, res) => {
   try {
     const data = await Analysis.findByPk(req.params.id);
