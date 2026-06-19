@@ -13,9 +13,12 @@ const app = express();
 
 // ================= CORS =================
 app.use(cors({
-  origin: "*", // change later to frontend URL in production
+  origin: [
+    "http://localhost:3000",
+    "https://github-analyzer-sable-two.vercel.app"
+  ],
+  credentials: true
 }));
-
 // ================= MIDDLEWARE =================
 app.use(express.json());
 
